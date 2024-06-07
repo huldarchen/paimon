@@ -182,6 +182,7 @@ public class OrcReaderFactory implements FormatReaderFactory {
             // because they point to the same data arrays internally design
             int batchSize = orcBatch.size;
             paimonColumnBatch.setNumRows(batchSize);
+            System.out.printf("~~~~~~~~batch: %d, rowNumber: %d\n", batchSize, rowNumber);
             result.reset(batchSize, rowNumber);
             return result;
         }
@@ -220,7 +221,9 @@ public class OrcReaderFactory implements FormatReaderFactory {
             final VectorizedRowBatch orcVectorBatch = batch.orcVectorizedRowBatch();
 
             long rowNumber = orcReader.getRowNumber();
+            System.out.println("=======rowNumber: " + rowNumber);
             if (!nextBatch(orcReader, orcVectorBatch)) {
+                // 如果没有数据了 就释放内存
                 batch.recycle();
                 return null;
             }

@@ -34,13 +34,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nullable;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 
@@ -82,6 +76,8 @@ public class AppendOnlyCompactManager extends CompactFutureManager {
 
     @Override
     public void triggerCompaction(boolean fullCompaction) {
+        System.out.println("~~~~~~~~ " + fullCompaction);
+        Arrays.stream(Thread.currentThread().getStackTrace()).forEach(System.out::println);
         if (fullCompaction) {
             triggerFullCompaction();
         } else {

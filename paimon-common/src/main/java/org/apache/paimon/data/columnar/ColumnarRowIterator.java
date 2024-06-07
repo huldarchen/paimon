@@ -27,6 +27,8 @@ import org.apache.paimon.utils.VectorMappingUtils;
 
 import javax.annotation.Nullable;
 
+import java.util.Arrays;
+
 /**
  * A {@link RecordReader.RecordIterator} that returns {@link InternalRow}s. The next row is set by
  * {@link ColumnarRow#setRowId}.
@@ -60,7 +62,9 @@ public class ColumnarRowIterator extends RecyclableIterator<InternalRow>
     @Nullable
     @Override
     public InternalRow next() {
+        System.out.format("thread: %s next() %s----------\n", Thread.currentThread().getName(), this.getClass());
         if (nextPos < num) {
+            System.out.println("rowData index: " + nextPos);
             rowData.setRowId(nextPos++);
             nextGlobalPos++;
             return rowData;

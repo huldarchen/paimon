@@ -77,6 +77,7 @@ public class RowDataFileWriter extends StatsCollectingSingleFileWriter<InternalR
     @Override
     public DataFileMeta result() throws IOException {
         BinaryTableStats stats = statsArraySerializer.toBinary(fieldStats());
+        // 数据元数据包含: 路径 文件个数 存的条目 字段元数据 最大最小序列号 元数据ID
         return DataFileMeta.forAppend(
                 path.getName(),
                 fileIO.getFileSize(path),

@@ -212,6 +212,7 @@ public class TableCommitImpl implements InnerTableCommit {
                 // TODO maybe it can be produced by CommitterOperator
                 committable = new ManifestCommittable(Long.MAX_VALUE);
             }
+            // SR24.03.20 ManifestCommittable落盘
             commit.overwrite(overwritePartition, committable, Collections.emptyMap());
             expire(committable.identifier(), expireMainExecutor);
         }
@@ -336,7 +337,7 @@ public class TableCommitImpl implements InnerTableCommit {
         if (consumerExpireTime != null) {
             consumerManager.expire(LocalDateTime.now().minus(consumerExpireTime));
         }
-
+        // SR24.03.19 快照写入
         expireSnapshots();
 
         if (partitionExpire != null) {

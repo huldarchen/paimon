@@ -140,7 +140,7 @@ public abstract class CatalogITCaseBase extends AbstractTestBase {
     }
 
     protected int defaultParallelism() {
-        return 2;
+        return 1;
     }
 
     protected List<String> ddl() {

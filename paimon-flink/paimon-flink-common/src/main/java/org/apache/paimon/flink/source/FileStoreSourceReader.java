@@ -33,6 +33,7 @@ import org.apache.flink.table.data.RowData;
 
 import javax.annotation.Nullable;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 
@@ -56,10 +57,14 @@ public class FileStoreSourceReader
                 () ->
                         new FileStoreSourceSplitReader(
                                 tableRead, RecordLimiter.create(limit), metrics),
-                (element, output, state) ->
-                        FlinkRecordsWithSplitIds.emitRecord(element, output, state, metrics),
+                (element, output, state) -> {
+                    System.out.println("emitRecord  element ----------: " + element.getClass() + "+++++thread: " + Thread.currentThread().getName());
+                    FlinkRecordsWithSplitIds.emitRecord(element, output, state, metrics);
+                },
                 readerContext.getConfiguration(),
                 readerContext);
+        System.out.println("FileStoreSourceReader init ----------");
+        Arrays.stream(Thread.currentThread().getStackTrace()).forEach(System.out::println);
         this.ioManager = ioManager;
     }
 

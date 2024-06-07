@@ -29,6 +29,8 @@ import org.apache.paimon.data.columnar.BytesColumnVector.Bytes;
 import org.apache.paimon.types.RowKind;
 
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 /**
  * Columnar row to support access to vector column data. It is a row view in {@link
@@ -40,12 +42,17 @@ public final class ColumnarRow implements InternalRow, DataSetters, Serializable
 
     private RowKind rowKind = RowKind.INSERT;
     private VectorizedColumnBatch vectorizedColumnBatch;
+    // 这里控制的是行数
     private int rowId;
 
     public ColumnarRow() {}
 
     public ColumnarRow(VectorizedColumnBatch vectorizedColumnBatch) {
         this(vectorizedColumnBatch, 0);
+        System.out.println("vectorizedColumnBatch: " +
+                Arrays.stream(vectorizedColumnBatch.columns)
+                        .map(Object::getClass).collect(Collectors.toList())
+        );
     }
 
     public ColumnarRow(VectorizedColumnBatch vectorizedColumnBatch, int rowId) {
@@ -84,57 +91,78 @@ public final class ColumnarRow implements InternalRow, DataSetters, Serializable
 
     @Override
     public boolean getBoolean(int pos) {
+        System.out.println("getBoolean(int pos) ----------");
+        Arrays.stream(Thread.currentThread().getStackTrace()).forEach(System.out::println);
         return vectorizedColumnBatch.getBoolean(rowId, pos);
     }
 
     @Override
     public byte getByte(int pos) {
+        System.out.println("etByte(int pos) ----------");
+        Arrays.stream(Thread.currentThread().getStackTrace()).forEach(System.out::println);
         return vectorizedColumnBatch.getByte(rowId, pos);
     }
 
     @Override
     public short getShort(int pos) {
+        System.out.println("getShort(int pos) ----------");
+        Arrays.stream(Thread.currentThread().getStackTrace()).forEach(System.out::println);
         return vectorizedColumnBatch.getShort(rowId, pos);
     }
 
     @Override
     public int getInt(int pos) {
+        System.out.println("getInt(int pos) ----------" + pos);
+        Arrays.stream(Thread.currentThread().getStackTrace()).forEach(System.out::println);
         return vectorizedColumnBatch.getInt(rowId, pos);
     }
 
     @Override
     public long getLong(int pos) {
+        System.out.println("getLong(int pos) ----------" + pos);
+        Arrays.stream(Thread.currentThread().getStackTrace()).forEach(System.out::println);
         return vectorizedColumnBatch.getLong(rowId, pos);
     }
 
     @Override
     public float getFloat(int pos) {
+        System.out.println("getFloat(int pos) ----------");
+        Arrays.stream(Thread.currentThread().getStackTrace()).forEach(System.out::println);
         return vectorizedColumnBatch.getFloat(rowId, pos);
     }
 
     @Override
     public double getDouble(int pos) {
+        System.out.println("getDouble(int pos) ----------");
+        Arrays.stream(Thread.currentThread().getStackTrace()).forEach(System.out::println);
         return vectorizedColumnBatch.getDouble(rowId, pos);
     }
 
     @Override
     public BinaryString getString(int pos) {
+        System.out.printf("getString(int pos) rowId: %d---pos: %d------- \n", rowId, pos);
         Bytes byteArray = vectorizedColumnBatch.getByteArray(rowId, pos);
         return BinaryString.fromBytes(byteArray.data, byteArray.offset, byteArray.len);
     }
 
     @Override
     public Decimal getDecimal(int pos, int precision, int scale) {
+        System.out.println("getDecimal(int pos) ----------");
+        Arrays.stream(Thread.currentThread().getStackTrace()).forEach(System.out::println);
         return vectorizedColumnBatch.getDecimal(rowId, pos, precision, scale);
     }
 
     @Override
     public Timestamp getTimestamp(int pos, int precision) {
+        System.out.println("getTimestamp(int pos) ----------");
+        Arrays.stream(Thread.currentThread().getStackTrace()).forEach(System.out::println);
         return vectorizedColumnBatch.getTimestamp(rowId, pos, precision);
     }
 
     @Override
     public byte[] getBinary(int pos) {
+        System.out.println("getBinary(int pos) ----------");
+        Arrays.stream(Thread.currentThread().getStackTrace()).forEach(System.out::println);
         Bytes byteArray = vectorizedColumnBatch.getByteArray(rowId, pos);
         if (byteArray.len == byteArray.data.length) {
             return byteArray.data;
@@ -147,6 +175,8 @@ public final class ColumnarRow implements InternalRow, DataSetters, Serializable
 
     @Override
     public InternalRow getRow(int pos, int numFields) {
+        System.out.println("getRow(int pos) ----------");
+        Arrays.stream(Thread.currentThread().getStackTrace()).forEach(System.out::println);
         return vectorizedColumnBatch.getRow(rowId, pos);
     }
 

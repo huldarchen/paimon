@@ -119,6 +119,7 @@ public class RowDataStoreWriteOperator extends TableWriteOperator<InternalRow> {
 
         SinkRecord record;
         try {
+            // SR24.03.16 将数据写入Paimon的文件系统
             record = write.write(element.getValue());
         } catch (Exception e) {
             throw new IOException(e);
@@ -126,6 +127,7 @@ public class RowDataStoreWriteOperator extends TableWriteOperator<InternalRow> {
 
         if (logSinkFunction != null) {
             // write to log store, need to preserve original pk (which includes partition fields)
+            // SR24.03.16 将数据双写到日志存储层，目前只支持写入到kafka
             SinkRecord logRecord = write.toLogRecord(record);
             logSinkFunction.invoke(logRecord, sinkContext);
         }

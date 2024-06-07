@@ -31,6 +31,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.FileAlreadyExistsException;
@@ -38,13 +39,16 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static org.apache.paimon.fs.local.LocalFileIOLoader.SCHEME;
 import static org.apache.paimon.utils.Preconditions.checkState;
 
-/** {@link FileIO} for local file. */
+/**
+ * {@link FileIO} for local file.
+ */
 public class LocalFileIO implements FileIO {
 
     private static final long serialVersionUID = 1L;
@@ -62,15 +66,19 @@ public class LocalFileIO implements FileIO {
     }
 
     @Override
-    public void configure(CatalogContext context) {}
+    public void configure(CatalogContext context) {
+    }
 
     @Override
     public SeekableInputStream newInputStream(Path path) throws IOException {
+        System.out.println("~~~~~~~~~~~ input path "+ Thread.currentThread().getName() + " : " + path.toUri());
+        Arrays.stream(Thread.currentThread().getStackTrace()).forEach(System.out::println);
         return new LocalSeekableInputStream(toFile(path));
     }
 
     @Override
     public PositionOutputStream newOutputStream(Path path, boolean overwrite) throws IOException {
+        System.out.println("~~~~~~~~~~~ output path" + path.toUri());
         if (exists(path) && !overwrite) {
             throw new FileAlreadyExistsException("File already exists: " + path);
         }
@@ -237,8 +245,13 @@ public class LocalFileIO implements FileIO {
 
         private final FileInputStream in;
         private final FileChannel channel;
+        private boolean strack;
+        private boolean isPrint = true;
 
         public LocalSeekableInputStream(File file) throws FileNotFoundException {
+            if (file.getName().startsWith("data")) {
+                strack = true;
+            }
             this.in = new FileInputStream(file);
             this.channel = in.getChannel();
         }
@@ -257,12 +270,22 @@ public class LocalFileIO implements FileIO {
 
         @Override
         public int read() throws IOException {
+            if (strack && isPrint) {
+                System.out.println("read LocalFileIO----------");
+                Arrays.stream(Thread.currentThread().getStackTrace()).forEach(System.out::println);
+            }
             return in.read();
         }
 
         @Override
         public int read(byte[] b, int off, int len) throws IOException {
-            return in.read(b, off, len);
+            int result = in.read(b, off, len);
+            if (strack && isPrint) {
+                System.out.format("thread: %s \n read(byte[] %s, int %d, int %d) LocalFileIO----------\n",
+                    Thread.currentThread().getName(), Arrays.toString(b), off, len);
+                Arrays.stream(Thread.currentThread().getStackTrace()).forEach(System.out::println);
+            }
+            return result;
         }
 
         @Override
@@ -271,13 +294,17 @@ public class LocalFileIO implements FileIO {
         }
     }
 
-    /** Local {@link PositionOutputStream}. */
+    /**
+     * Local {@link PositionOutputStream}.
+     */
     public static class LocalPositionOutputStream extends PositionOutputStream {
 
         private final FileOutputStream out;
+        private final String fileName;
 
         public LocalPositionOutputStream(File file) throws FileNotFoundException {
             this.out = new FileOutputStream(file);
+            this.fileName = file.getPath();
         }
 
         @Override
@@ -287,21 +314,34 @@ public class LocalFileIO implements FileIO {
 
         @Override
         public void write(int b) throws IOException {
+            System.out.println("write(int b): " + fileName + " value: " + b);
+            // Arrays.stream(Thread.currentThread().getStackTrace()).forEach(System.out::println);
             out.write(b);
         }
 
         @Override
         public void write(byte[] b) throws IOException {
+            System.out.println(" write(byte[] b): " + fileName);
+            Arrays.stream(Thread.currentThread().getStackTrace()).forEach(System.out::println);
             out.write(b);
         }
 
         @Override
         public void write(byte[] b, int off, int len) throws IOException {
+            System.out.println("write(byte[] b, int off, int len): " + fileName + ": value: " + value(b, off, len));
+             Arrays.stream(Thread.currentThread().getStackTrace()).forEach(System.out::println);
             out.write(b, off, len);
+        }
+        private String value(byte[] b, int off, int len) {
+            byte[] rest = new byte[len];
+            System.arraycopy(b, off, rest, 0, len);
+            return new String(rest, StandardCharsets.UTF_8);
         }
 
         @Override
         public void flush() throws IOException {
+            System.out.println("flush: " + fileName);
+            // Arrays.stream(Thread.currentThread().getStackTrace()).forEach(System.out::println);
             out.flush();
         }
 

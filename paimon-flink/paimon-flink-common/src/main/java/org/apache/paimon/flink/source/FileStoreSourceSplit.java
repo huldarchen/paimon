@@ -22,6 +22,7 @@ import org.apache.paimon.table.source.Split;
 
 import org.apache.flink.api.connector.source.SourceSplit;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 /** {@link SourceSplit} of file store. */
@@ -36,9 +37,13 @@ public class FileStoreSourceSplit implements SourceSplit {
 
     public FileStoreSourceSplit(String id, Split split) {
         this(id, split, 0);
+        System.out.println("FileStoreSourceSplit(String id, Split split) ---------- thread: " + Thread.currentThread().getName());
+        Arrays.stream(Thread.currentThread().getStackTrace()).forEach(System.out::println);
     }
 
     public FileStoreSourceSplit(String id, Split split, long recordsToSkip) {
+        System.out.println("FileStoreSourceSplit(String id, Split split, long recordsToSkip) ----------");
+        Arrays.stream(Thread.currentThread().getStackTrace()).forEach(System.out::println);
         this.id = id;
         this.split = split;
         this.recordsToSkip = recordsToSkip;

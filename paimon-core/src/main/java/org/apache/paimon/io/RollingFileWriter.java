@@ -32,6 +32,7 @@ import java.util.function.Supplier;
 
 /**
  * Writer to roll over to a new file if the current size exceed the target file size.
+ * 滚动文件写入器,将文件写入委托给单个文件写入器 writerFactory
  *
  * @param <T> record data type.
  * @param <R> the file metadata result.

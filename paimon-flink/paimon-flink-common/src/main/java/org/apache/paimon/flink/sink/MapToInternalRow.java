@@ -31,6 +31,7 @@ import org.apache.flink.table.data.RowData;
 public class MapToInternalRow {
 
     public static DataStream<InternalRow> map(DataStream<RowData> input, RowType rowType) {
+        // SR24.03.28 将flink RowData转换成paimon的类型
         return input.map((MapFunction<RowData, InternalRow>) FlinkRowWrapper::new)
                 .setParallelism(input.getParallelism())
                 .returns(InternalTypeInfo.fromRowType(rowType));

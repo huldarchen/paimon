@@ -40,6 +40,7 @@ import org.apache.flink.table.data.RowData;
 import javax.annotation.Nullable;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -130,7 +131,8 @@ public class FileStoreSourceSplitReader
                             "The SplitChange type of %s is not supported.",
                             splitsChange.getClass()));
         }
-
+        System.out.println("handleSplitsChanges(SplitsChange<FileStoreSourceSplit> splitsChange)----------");
+        Arrays.stream(Thread.currentThread().getStackTrace()).forEach(System.out::println);
         splits.addAll(splitsChange.splits());
     }
 
@@ -288,6 +290,7 @@ public class FileStoreSourceSplitReader
 
         public RecordReader<InternalRow> recordReader() throws IOException {
             if (lazyRecordReader == null) {
+                System.out.println("table reader is: " + tableRead.getClass());
                 lazyRecordReader = tableRead.createReader(split);
             }
             return lazyRecordReader;

@@ -123,6 +123,7 @@ case class WriteIntoPaimonTable(
     }
 
     val rowType = table.rowType()
+    // SR24.03.19 BatchWriteBuilderImpl
     val writeBuilder = table.newBatchWriteBuilder()
 
     if (overwritePartition != null) {

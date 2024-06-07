@@ -47,6 +47,7 @@ public class IteratorRecordReader<T> implements RecordReader<T> {
         return new RecordIterator<T>() {
             @Override
             public T next() {
+                System.out.println("----------------" + iterator.getClass());
                 return iterator.hasNext() ? iterator.next() : null;
             }
 

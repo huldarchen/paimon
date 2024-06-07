@@ -44,8 +44,11 @@ import static org.apache.paimon.utils.Preconditions.checkState;
  */
 public class TableWriteImpl<T> implements InnerTableWrite, Restorable<List<State<T>>> {
 
+    // 最终的写入代理
     private final FileStoreWrite<T> write;
+    // 抽取分桶的逻辑
     private final KeyAndBucketExtractor<InternalRow> keyAndBucketExtractor;
+    // 行数据转换
     private final RecordExtractor<T> recordExtractor;
 
     private boolean batchCommitted = false;

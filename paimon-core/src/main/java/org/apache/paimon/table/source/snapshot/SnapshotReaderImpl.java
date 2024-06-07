@@ -52,6 +52,7 @@ import org.apache.paimon.utils.TypeUtils;
 import javax.annotation.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -234,12 +235,16 @@ public class SnapshotReaderImpl implements SnapshotReader {
     /** Get splits from {@link FileKind#ADD} files. */
     @Override
     public Plan read() {
+        System.out.println("#####");
+        Arrays.stream(Thread.currentThread().getStackTrace()).forEach(System.out::println);
         FileStoreScan.Plan plan = scan.plan();
+        System.out.println("+++: " + plan.snapshotId() + " @@@: " + plan.files());
         Long snapshotId = plan.snapshotId();
-
+        // 先按照分区分组,再按照bucket分组 取ADD的数据
         Map<BinaryRow, Map<Integer, List<DataFileMeta>>> files =
                 groupByPartFiles(plan.files(FileKind.ADD));
         if (options.scanPlanSortPartition()) {
+            // 分区排序
             Map<BinaryRow, Map<Integer, List<DataFileMeta>>> newFiles = new LinkedHashMap<>();
             files.entrySet().stream()
                     .sorted((o1, o2) -> partitionComparator().compare(o1.getKey(), o2.getKey()))
@@ -281,6 +286,7 @@ public class SnapshotReaderImpl implements SnapshotReader {
                 for (List<DataFileMeta> dataFiles : splitGroups) {
                     builder.withDataFiles(dataFiles)
                             .rawFiles(convertToRawFiles(partition, bucket, dataFiles));
+                    // NEXT deletionVectors是什么
                     if (deletionVectors) {
                         IndexFileMeta deletionIndexFile =
                                 indexFileHandler
@@ -432,13 +438,15 @@ public class SnapshotReaderImpl implements SnapshotReader {
 
     private List<RawFile> convertToRawFiles(
             BinaryRow partition, int bucket, List<DataFileMeta> dataFiles) {
+        // 生成 文件路径 根据分区和分桶
         String bucketPath = pathFactory.bucketPath(partition, bucket).toString();
 
         // append only or deletionVectors files can be returned
+        // 不是主键表
         if (tableSchema.primaryKeys().isEmpty() || deletionVectors) {
             return makeRawTableFiles(bucketPath, dataFiles);
         }
-
+        // 是主键表
         int maxLevel = options.numLevels() - 1;
         if (dataFiles.stream().map(DataFileMeta::level).allMatch(l -> l == maxLevel)) {
             return makeRawTableFiles(bucketPath, dataFiles);

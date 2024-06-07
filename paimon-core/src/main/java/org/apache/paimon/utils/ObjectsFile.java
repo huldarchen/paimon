@@ -75,6 +75,7 @@ public class ObjectsFile<T> {
     }
 
     public List<T> read(String fileName) {
+        System.out.println("base mate file read data file: " + fileName);
         return read(fileName, Filter.alwaysTrue(), Filter.alwaysTrue());
     }
 

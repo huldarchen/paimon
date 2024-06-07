@@ -20,6 +20,8 @@ package org.apache.paimon.format.orc.reader;
 
 import org.apache.hadoop.hive.ql.exec.vector.LongColumnVector;
 
+import java.util.Arrays;
+
 /**
  * This column vector is used to adapt hive's LongColumnVector to Paimon's boolean, byte, short, int
  * and long ColumnVector.
@@ -55,7 +57,11 @@ public class OrcLongColumnVector extends AbstractOrcColumnVector
 
     @Override
     public int getInt(int i) {
-        return (int) vector.vector[vector.isRepeating ? 0 : i];
+        // Arrays.stream(Thread.currentThread().getStackTrace()).forEach(System.out::println);
+        // System.out.println("---------------------------");
+        int i1 = (int) vector.vector[vector.isRepeating ? 0 : i];
+        System.out.println("rest: "+ i1 + "+++++" + Arrays.toString(vector.vector));
+        return i1;
     }
 
     @Override

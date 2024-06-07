@@ -223,7 +223,7 @@ public class FlinkSourceBuilder {
             // TODO visit all options through CoreOptions
             StartupMode startupMode = CoreOptions.startupMode(conf);
             StreamingReadMode streamingReadMode = CoreOptions.streamReadType(conf);
-
+            // next 创建不同的文件读取器
             if (logSourceProvider != null && streamingReadMode != FILE) {
                 if (startupMode != StartupMode.LATEST_FULL) {
                     return toDataStream(logSourceProvider.createSource(null));

@@ -46,7 +46,6 @@ public abstract class ResetRowKindRecordIterator
             keyValue.key().setRowKind(RowKind.INSERT);
             keyValue.value().setRowKind(RowKind.INSERT);
         }
-
         keyValue = kvIterator.next();
         return keyValue;
     }

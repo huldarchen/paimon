@@ -85,7 +85,10 @@ public class LoserTree<T> implements Closeable {
             Arrays.fill(tree, -1);
             for (int i = size - 1; i >= 0; i--) {
                 leaves.get(i).advanceIfAvailable();
+                System.out.println("adjust: " + i);
+                System.out.println("adjust before: " + Arrays.toString(this.tree));
                 adjust(i);
+                System.out.println("adjust after: " + Arrays.toString(this.tree));
             }
             initialized = true;
         }
@@ -124,6 +127,8 @@ public class LoserTree<T> implements Closeable {
      * whether all the current same keys have been processed.
      */
     private void adjust(int winner) {
+        System.out.println("parent: " + (winner + this.size) / 2);
+        // SR24.03.24
         for (int parent = (winner + this.size) / 2; parent > 0 && winner >= 0; parent /= 2) {
             LeafIterator<T> winnerNode = leaves.get(winner);
             LeafIterator<T> parentNode;

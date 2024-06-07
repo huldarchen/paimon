@@ -1722,4 +1722,33 @@ public class PreAggregationITCase {
             }
         }
     }
+
+    public static class HuldarFirstValueITCase extends CatalogITCaseBase {
+        @Override
+        protected List<String> ddl() {
+            return Collections.singletonList("CREATE TABLE T (\n" +
+                    "k INT,\n" +
+                    "a INT,\n" +
+                    "b VARCHAR,\n" +
+                    "c VARCHAR,\n" +
+                    "d VARCHAR,\n" +
+                    "PRIMARY KEY (k) NOT ENFORCED)\n" +
+                    " WITH ('merge-engine'='aggregation', \n" +
+                    "'changelog-producer' = 'full-compaction',\n" +
+                    "'fields.b.aggregate-function'='first_value',\n" +
+                    "'fields.c.aggregate-function'='first_non_null_value',\n" +
+                    "'fields.d.aggregate-function'='first_not_null_value',\n" +
+                    "'sequence.field'='a'\n" +
+                    ");");
+        }
+
+        @Test
+        void testUnOrderInput2() {
+            batchSql("INSERT INTO T VALUES (1, 4, '4', '4', '4')");
+            batchSql("INSERT INTO T VALUES (1, 2, '2', '2', '2')");
+            batchSql("INSERT INTO T VALUES (1, 3, '3', '3', '3')");
+            List<Row> result = batchSql("SELECT * FROM T");
+            assertThat(result).containsExactlyInAnyOrder(Row.of(1, 2, "2", "2", "2"));
+        }
+    }
 }

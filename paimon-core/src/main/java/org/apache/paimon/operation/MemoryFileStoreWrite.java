@@ -104,6 +104,7 @@ public abstract class MemoryFileStoreWrite<T> extends AbstractFileStoreWrite<T> 
 
     @Override
     protected void notifyNewWriter(RecordWriter<T> writer) {
+        // 这里是做什么
         if (!(writer instanceof MemoryOwner)) {
             throw new RuntimeException(
                     "Should create a MemoryOwner for MemoryTableWrite,"

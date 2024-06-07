@@ -208,6 +208,7 @@ public abstract class AbstractFileStoreScan implements FileStoreScan {
     @Override
     public Plan plan() {
 
+        // SR 获取镜像下的文件信息Manifest
         Pair<Snapshot, List<ManifestEntry>> planResult = doPlan();
 
         final Snapshot readSnapshot = planResult.getLeft();
@@ -258,6 +259,7 @@ public abstract class AbstractFileStoreScan implements FileStoreScan {
 
         AtomicLong cntEntries = new AtomicLong(0);
 
+        // SR24.04.01 合并源文件
         Collection<ManifestEntry> mergedEntries =
                 readAndMergeFileEntries(
                         manifests,
@@ -360,6 +362,8 @@ public abstract class AbstractFileStoreScan implements FileStoreScan {
 
     private Pair<Snapshot, List<ManifestFileMeta>> readManifests() {
         List<ManifestFileMeta> manifests = specifiedManifests;
+        // SR24.04.01 如果specifiedSnapshot不为空获取指定的snapshot,如果为空,则通过snapshot获取最新的镜像
+        // 在使用snapshot和扫描方式(完全/DELTA/CHANGELOG)manifests
         Snapshot snapshot = null;
         if (manifests == null) {
             snapshot =

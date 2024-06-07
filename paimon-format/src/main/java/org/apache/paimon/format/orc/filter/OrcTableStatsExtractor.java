@@ -82,6 +82,7 @@ public class OrcTableStatsExtractor implements TableStatsExtractor {
             List<TypeDescription> columnTypes = schema.getChildren();
 
             FieldStatsCollector[] collectors = FieldStatsCollector.create(statsCollectors);
+            System.out.println("stats : " + rowCount + " columnNames: " + columnNames);
 
             return Pair.of(
                     IntStream.range(0, rowType.getFieldCount())

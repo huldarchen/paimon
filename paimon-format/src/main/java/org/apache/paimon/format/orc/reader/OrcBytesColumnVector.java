@@ -20,10 +20,18 @@ package org.apache.paimon.format.orc.reader;
 
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+
 /** This column vector is used to adapt hive's BytesColumnVector to Paimon's BytesColumnVector. */
 public class OrcBytesColumnVector extends AbstractOrcColumnVector
         implements org.apache.paimon.data.columnar.BytesColumnVector {
 
+    /*
+        数据存储为 二维数数据
+        start也是数组
+        length也是数组
+     */
     private final BytesColumnVector vector;
 
     public OrcBytesColumnVector(BytesColumnVector vector) {

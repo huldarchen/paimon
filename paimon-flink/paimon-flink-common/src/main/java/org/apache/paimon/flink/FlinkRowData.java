@@ -34,6 +34,8 @@ import org.apache.flink.table.data.StringData;
 import org.apache.flink.table.data.TimestampData;
 import org.apache.flink.types.RowKind;
 
+import java.util.Arrays;
+
 import static org.apache.paimon.flink.FlinkRowWrapper.fromFlinkRowKind;
 
 /** Convert to Flink row data. */
@@ -43,9 +45,13 @@ public class FlinkRowData implements RowData {
 
     public FlinkRowData(InternalRow row) {
         this.row = row;
+        System.out.println("FlinkRowData(InternalRow row) ----------");
+        Arrays.stream(Thread.currentThread().getStackTrace()).forEach(System.out::println);
     }
 
     public FlinkRowData replace(InternalRow row) {
+        System.out.println("replace(InternalRow row) ----------");
+        Arrays.stream(Thread.currentThread().getStackTrace()).forEach(System.out::println);
         this.row = row;
         return this;
     }

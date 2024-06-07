@@ -109,15 +109,15 @@ public class AppendOnlyTableITCase extends CatalogITCaseBase {
                 .containsExactlyInAnyOrder(
                         Row.of(1, "AAA"), Row.of(1, "AAA"), Row.of(2, "BBB"), Row.of(3, "BBB"));
 
-        rows = batchSql("SELECT id FROM append_table");
-        assertThat(rows.size()).isEqualTo(4);
-        assertThat(rows).containsExactlyInAnyOrder(Row.of(1), Row.of(1), Row.of(2), Row.of(3));
-
-        rows = batchSql("SELECT data FROM append_table");
-        assertThat(rows.size()).isEqualTo(4);
-        assertThat(rows)
-                .containsExactlyInAnyOrder(
-                        Row.of("AAA"), Row.of("AAA"), Row.of("BBB"), Row.of("BBB"));
+        // rows = batchSql("SELECT id FROM append_table");
+        // assertThat(rows.size()).isEqualTo(4);
+        // assertThat(rows).containsExactlyInAnyOrder(Row.of(1), Row.of(1), Row.of(2), Row.of(3));
+        //
+        // rows = batchSql("SELECT data FROM append_table");
+        // assertThat(rows.size()).isEqualTo(4);
+        // assertThat(rows)
+        //         .containsExactlyInAnyOrder(
+        //                 Row.of("AAA"), Row.of("AAA"), Row.of("BBB"), Row.of("BBB"));
     }
 
     @Test

@@ -90,9 +90,11 @@ public class FlinkSinkBuilder {
     }
 
     public DataStreamSink<?> build() {
+        // SR24.03.18 这里将Flink的数据结构转换成paimon的数据结构
         DataStream<InternalRow> input = MapToInternalRow.map(this.input, table.rowType());
         if (table.coreOptions().localMergeEnabled() && table.schema().primaryKeys().size() > 0) {
             input =
+                    // SR24.03.21 forward 使得不进行重新分区
                     input.forward()
                             .transform(
                                     "local merge",
@@ -102,14 +104,19 @@ public class FlinkSinkBuilder {
         }
 
         BucketMode bucketMode = table.bucketMode();
+        // SR24.03.16 会根据不同的bucket(分桶)模式 生成不同的sink
         switch (bucketMode) {
             case FIXED:
+                // 固定分桶
                 return buildForFixedBucket(input);
             case DYNAMIC:
+                // 动态分桶
                 return buildDynamicBucketSink(input, false);
             case GLOBAL_DYNAMIC:
+                // 全局动态分桶
                 return buildDynamicBucketSink(input, true);
             case UNAWARE:
+                // 忽略桶,只适用于append表
                 return buildUnawareBucketSink(input);
             default:
                 throw new UnsupportedOperationException("Unsupported bucket mode: " + bucketMode);
@@ -130,11 +137,13 @@ public class FlinkSinkBuilder {
     }
 
     private DataStreamSink<?> buildForFixedBucket(DataStream<InternalRow> input) {
+        // SR24.03.16 首先根据分区信息、bucket字段进行bucket分组
         DataStream<InternalRow> partitioned =
                 partition(
                         input,
                         new RowDataChannelComputer(table.schema(), logSinkFunction != null),
                         parallelism);
+        // SR24.03.16 FileStoreSink实现将记录写入Paimon，FileStoreSink提供了生成写入算子的方法
         FixedBucketSink sink = new FixedBucketSink(table, overwritePartition, logSinkFunction);
         return sink.sinkFrom(partitioned);
     }

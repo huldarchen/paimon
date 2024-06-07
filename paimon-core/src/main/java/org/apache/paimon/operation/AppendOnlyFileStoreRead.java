@@ -55,7 +55,9 @@ import java.util.Map;
 
 import static org.apache.paimon.predicate.PredicateBuilder.splitAnd;
 
-/** {@link FileStoreRead} for {@link AppendOnlyFileStore}. */
+/**
+ * {@link FileStoreRead} for {@link AppendOnlyFileStore}.
+ */
 public class AppendOnlyFileStoreRead implements FileStoreRead<InternalRow> {
 
     private static final Logger LOG = LoggerFactory.getLogger(AppendOnlyFileStoreRead.class);
@@ -69,7 +71,8 @@ public class AppendOnlyFileStoreRead implements FileStoreRead<InternalRow> {
 
     private int[][] projection;
 
-    @Nullable private List<Predicate> filters;
+    @Nullable
+    private List<Predicate> filters;
 
     public AppendOnlyFileStoreRead(
             FileIO fileIO,
@@ -101,6 +104,7 @@ public class AppendOnlyFileStoreRead implements FileStoreRead<InternalRow> {
 
     @Override
     public RecordReader<InternalRow> createReader(DataSplit split) throws IOException {
+        // SR24.03.29 这里真正生成数据行
         DataFilePathFactory dataFilePathFactory =
                 pathFactory.createDataFilePathFactory(split.partition(), split.bucket());
         List<ConcatRecordReader.ReaderSupplier<InternalRow>> suppliers = new ArrayList<>();
@@ -111,6 +115,7 @@ public class AppendOnlyFileStoreRead implements FileStoreRead<InternalRow> {
             String formatIdentifier = DataFilePathFactory.formatIdentifier(file.fileName());
             BulkFormatMapping bulkFormatMapping =
                     bulkFormatMappings.computeIfAbsent(
+                            // 创建一个桶文件格式的映射
                             new FormatKey(file.schemaId(), formatIdentifier),
                             key -> {
                                 TableSchema tableSchema = schemaManager.schema(this.schemaId);
@@ -138,6 +143,7 @@ public class AppendOnlyFileStoreRead implements FileStoreRead<InternalRow> {
                                                         dataSchema.fields(),
                                                         filters);
 
+                                // SR24.04.01 分区表
                                 Pair<int[], RowType> partitionPair = null;
                                 if (!dataSchema.partitionKeys().isEmpty()) {
                                     Pair<int[], int[][]> partitionMapping =

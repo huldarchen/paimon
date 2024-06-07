@@ -27,6 +27,7 @@ import org.apache.paimon.data.columnar.BytesColumnVector.Bytes;
 
 import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 /**
  * A VectorizedColumnBatch is a set of rows, organized with each column as a vector. It is the unit
@@ -47,6 +48,8 @@ public class VectorizedColumnBatch implements Serializable {
     public final org.apache.paimon.data.columnar.ColumnVector[] columns;
 
     public VectorizedColumnBatch(ColumnVector[] vectors) {
+        System.out.println("VectorizedColumnBatch(ColumnVector[] vectors) ----------");
+        Arrays.stream(Thread.currentThread().getStackTrace()).forEach(System.out::println);
         this.columns = vectors;
     }
 
@@ -95,6 +98,7 @@ public class VectorizedColumnBatch implements Serializable {
     }
 
     public Bytes getByteArray(int rowId, int colId) {
+        // 获取第几列 第几行数据
         return ((BytesColumnVector) columns[colId]).getBytes(rowId);
     }
 

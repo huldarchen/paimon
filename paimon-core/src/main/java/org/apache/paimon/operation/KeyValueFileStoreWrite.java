@@ -90,13 +90,19 @@ public class KeyValueFileStoreWrite extends MemoryFileStoreWrite<KeyValue> {
 
     private final KeyValueFileReaderFactory.Builder readerFactoryBuilder;
     private final KeyValueFileWriterFactory.Builder writerFactoryBuilder;
+    // 比较器
     private final Supplier<Comparator<InternalRow>> keyComparatorSupplier;
+    // 文件比较器
     private final Supplier<FieldsComparator> udsComparatorSupplier;
+    // 行项比较是否相等
     private final Supplier<RecordEqualiser> valueEqualiserSupplier;
+    // 合并的方法
     private final MergeFunctionFactory<KeyValue> mfFactory;
     private final CoreOptions options;
     private final FileIO fileIO;
+    // key类型
     private final RowType keyType;
+    // value类型
     private final RowType valueType;
 
     public KeyValueFileStoreWrite(
@@ -177,20 +183,23 @@ public class KeyValueFileStoreWrite extends MemoryFileStoreWrite<KeyValue> {
                 writerFactoryBuilder.build(partition, bucket, options);
         Comparator<InternalRow> keyComparator = keyComparatorSupplier.get();
         Levels levels = new Levels(keyComparator, restoreFiles, options.numLevels());
+        // 统一合并
         UniversalCompaction universalCompaction =
                 new UniversalCompaction(
                         options.maxSizeAmplificationPercent(),
                         options.sortedRunSizeRatio(),
                         options.numSortedRunCompactionTrigger(),
                         options.optimizedCompactionInterval());
+        // 合并策略
         CompactStrategy compactStrategy =
                 options.needLookup()
                         ? new ForceUpLevel0Compaction(universalCompaction)
                         : universalCompaction;
+        // 合并器管理者
         CompactManager compactManager =
                 createCompactManager(
                         partition, bucket, compactStrategy, compactExecutor, levels, dvMaintainer);
-
+        // 创建写入器
         return new MergeTreeWriter(
                 bufferSpillable(),
                 options.localSortMaxNumFileHandles(),

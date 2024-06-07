@@ -35,7 +35,7 @@ import java.util.function.Function;
 
 /**
  * A {@link FileWriter} to produce a single file.
- *
+ *  SR24.03.19 真正写入的逻辑
  * @param <T> type of records to write.
  * @param <R> type of result to produce after writing a file.
  */

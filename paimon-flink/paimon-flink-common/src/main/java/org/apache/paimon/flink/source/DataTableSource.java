@@ -216,6 +216,7 @@ public class DataTableSource extends FlinkTableSource {
 
     private DataStream<RowData> configureSource(
             FlinkSourceBuilder sourceBuilder, StreamExecutionEnvironment env) {
+        // next
         Options options = Options.fromMap(this.table.options());
         Configuration envConfig = (Configuration) env.getConfiguration();
         if (envConfig.containsKey(FLINK_INFER_SCAN_PARALLELISM)) {

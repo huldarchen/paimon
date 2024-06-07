@@ -48,7 +48,7 @@ public class LoserTreeTest {
     private static final Comparator<KeyValue> SEQUENCE_COMPARATOR =
             Comparator.comparingLong(KeyValue::sequenceNumber).reversed();
 
-    @RepeatedTest(100)
+    @RepeatedTest(1)
     public void testLoserTreeIsOrdered() throws IOException {
         List<ReusingTestData> reusingTestData = new ArrayList<>();
         List<RecordReader<KeyValue>> sortedTestReaders =

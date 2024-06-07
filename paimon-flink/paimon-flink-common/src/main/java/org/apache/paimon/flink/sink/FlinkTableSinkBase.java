@@ -114,7 +114,7 @@ public abstract class FlinkTableSinkBase
             throw new UnsupportedOperationException(
                     "Paimon doesn't support streaming INSERT OVERWRITE.");
         }
-
+        // SR24.03.16 如果配置了log.system,生产日志代理,只实现了kafka的日志系统
         LogSinkProvider logSinkProvider = null;
         if (logStoreTableFactory != null) {
             logSinkProvider = logStoreTableFactory.createSinkProvider(this.context, context);
@@ -124,13 +124,16 @@ public abstract class FlinkTableSinkBase
         // Do not sink to log store when overwrite mode
         final LogSinkFunction logSinkFunction =
                 overwrite ? null : (logSinkProvider == null ? null : logSinkProvider.createSink());
+
         return new PaimonDataStreamSinkProvider(
                 (dataStream) ->
                         new FlinkSinkBuilder((FileStoreTable) table)
                                 .withInput(
+                                        // SR24.03.16 FileStoreTable时FileStore的抽象层，提供InternalRow的读取和写入
                                         new DataStream<>(
                                                 dataStream.getExecutionEnvironment(),
                                                 dataStream.getTransformation()))
+                                // SR24.03.18 changelog 函数
                                 .withLogSinkFunction(logSinkFunction)
                                 .withOverwritePartition(overwrite ? staticPartitions : null)
                                 .withParallelism(conf.get(FlinkConnectorOptions.SINK_PARALLELISM))

@@ -192,7 +192,7 @@ public abstract class AbstractFileStoreWrite<T> implements FileStoreWrite<T> {
                 Map.Entry<Integer, WriterContainer<T>> entry = bucketIter.next();
                 int bucket = entry.getKey();
                 WriterContainer<T> writerContainer = entry.getValue();
-
+                // SR24.03.20 commit
                 CommitIncrement increment = writerContainer.writer.prepareCommit(waitCompaction);
                 List<IndexFileMeta> newIndexFiles = new ArrayList<>();
                 if (writerContainer.indexMaintainer != null) {
@@ -334,6 +334,7 @@ public abstract class AbstractFileStoreWrite<T> implements FileStoreWrite<T> {
     }
 
     private WriterContainer<T> getWriterWrapper(BinaryRow partition, int bucket) {
+        // 一个分区一个写入器
         Map<Integer, WriterContainer<T>> buckets = writers.get(partition);
         if (buckets == null) {
             buckets = new HashMap<>();
@@ -354,6 +355,7 @@ public abstract class AbstractFileStoreWrite<T> implements FileStoreWrite<T> {
             LOG.debug("Creating writer for partition {}, bucket {}", partition, bucket);
         }
 
+        // SR24.03.16 如果超过就刷到磁盘 不是流式 并且  写入的数量大于最大写入量
         if (!isStreamingMode && writerNumber() >= writerNumberMax) {
             try {
                 forceBufferSpill();
@@ -362,21 +364,26 @@ public abstract class AbstractFileStoreWrite<T> implements FileStoreWrite<T> {
             }
         }
 
+        // 获取最新快照ID
         Long latestSnapshotId = snapshotManager.latestSnapshotId();
         List<DataFileMeta> restoreFiles = new ArrayList<>();
+        // 如果不忽略以前的文件 并且 最新快照ID不为空 读取已经存在的文件元数据
         if (!ignorePreviousFiles && latestSnapshotId != null) {
             restoreFiles = scanExistingFileMetas(latestSnapshotId, partition, bucket);
         }
+        // 索引维护器
         IndexMaintainer<T> indexMaintainer =
                 indexFactory == null
                         ? null
                         : indexFactory.createOrRestore(
                                 ignorePreviousFiles ? null : latestSnapshotId, partition, bucket);
+        // 删除向量维护器
         DeletionVectorsMaintainer deletionVectorsMaintainer =
                 deletionVectorsMaintainerFactory == null
                         ? null
                         : deletionVectorsMaintainerFactory.createOrRestore(
                                 ignorePreviousFiles ? null : latestSnapshotId, partition, bucket);
+        // 创建写入器, 并通知
         RecordWriter<T> writer =
                 createWriter(
                         partition.copy(),
@@ -386,6 +393,7 @@ public abstract class AbstractFileStoreWrite<T> implements FileStoreWrite<T> {
                         compactExecutor(),
                         deletionVectorsMaintainer);
         notifyNewWriter(writer);
+
         return new WriterContainer<>(
                 writer, indexMaintainer, deletionVectorsMaintainer, latestSnapshotId);
     }
@@ -401,6 +409,7 @@ public abstract class AbstractFileStoreWrite<T> implements FileStoreWrite<T> {
         return this;
     }
 
+    // 扫描已经存在文件元数据
     private List<DataFileMeta> scanExistingFileMetas(
             long snapshotId, BinaryRow partition, int bucket) {
         List<DataFileMeta> existingFileMetas = new ArrayList<>();
@@ -412,6 +421,7 @@ public abstract class AbstractFileStoreWrite<T> implements FileStoreWrite<T> {
     }
 
     private ExecutorService compactExecutor() {
+        // 创建合并调度器
         if (lazyCompactExecutor == null) {
             lazyCompactExecutor =
                     Executors.newSingleThreadScheduledExecutor(
@@ -445,6 +455,7 @@ public abstract class AbstractFileStoreWrite<T> implements FileStoreWrite<T> {
      */
     @VisibleForTesting
     public static class WriterContainer<T> {
+        // 真正的写入逻辑
         public final RecordWriter<T> writer;
         @Nullable public final IndexMaintainer<T> indexMaintainer;
         @Nullable public final DeletionVectorsMaintainer deletionVectorsMaintainer;

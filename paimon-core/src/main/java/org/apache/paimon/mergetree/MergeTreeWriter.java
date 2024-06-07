@@ -53,7 +53,9 @@ import java.util.stream.Collectors;
 /** A {@link RecordWriter} to write records and generate {@link CompactIncrement}. */
 public class MergeTreeWriter implements RecordWriter<KeyValue>, MemoryOwner {
 
+    // 是否可以进行切分
     private final boolean writeBufferSpillable;
+
     private final int sortMaxFan;
     private final String sortCompression;
     private final IOManager ioManager;
@@ -61,13 +63,19 @@ public class MergeTreeWriter implements RecordWriter<KeyValue>, MemoryOwner {
     private final RowType keyType;
     private final RowType valueType;
     private final CompactManager compactManager;
+    // key比较器
     private final Comparator<InternalRow> keyComparator;
+    // 合并的方式
     private final MergeFunction<KeyValue> mergeFunction;
+    // 写入工厂
     private final KeyValueFileWriterFactory writerFactory;
+    // 提交合并
     private final boolean commitForceCompact;
+    // changelog类型
     private final ChangelogProducer changelogProducer;
+    // 字段比较器
     @Nullable private final FieldsComparator userDefinedSeqComparator;
-
+    // 新增的文件
     private final LinkedHashSet<DataFileMeta> newFiles;
     private final LinkedHashSet<DataFileMeta> newFilesChangelog;
     private final LinkedHashMap<String, DataFileMeta> compactBefore;
@@ -111,6 +119,7 @@ public class MergeTreeWriter implements RecordWriter<KeyValue>, MemoryOwner {
         this.compactBefore = new LinkedHashMap<>();
         this.compactAfter = new LinkedHashSet<>();
         this.compactChangelog = new LinkedHashSet<>();
+        // 增量信息
         if (increment != null) {
             newFiles.addAll(increment.newFilesIncrement().newFiles());
             newFilesChangelog.addAll(increment.newFilesIncrement().changelogFiles());
@@ -148,7 +157,9 @@ public class MergeTreeWriter implements RecordWriter<KeyValue>, MemoryOwner {
 
     @Override
     public void write(KeyValue kv) throws Exception {
+        // SR24.03.21 真正的写入,写入内存中
         long sequenceNumber = newSequenceNumber();
+        // 如果内存已满这里写入失败
         boolean success = writeBuffer.put(sequenceNumber, kv.valueKind(), kv.key(), kv.value());
         if (!success) {
             flushWriteBuffer(false, false);
@@ -190,18 +201,21 @@ public class MergeTreeWriter implements RecordWriter<KeyValue>, MemoryOwner {
     private void flushWriteBuffer(boolean waitForLatestCompaction, boolean forcedFullCompaction)
             throws Exception {
         if (writeBuffer.size() > 0) {
+            // SR24.03.16 判断是否需要进行等待上一次compact结束
             if (compactManager.shouldWaitForLatestCompaction()) {
                 waitForLatestCompaction = true;
             }
-
+            // SR24.03.16 根据changelogProducer的类型生成changelog文件写入器
             final RollingFileWriter<KeyValue, DataFileMeta> changelogWriter =
                     changelogProducer == ChangelogProducer.INPUT
                             ? writerFactory.createRollingChangelogFileWriter(0)
                             : null;
+            // SR24.03.16 生成flush数据的MergeTree文件写入器，根据文件大小进行rolling
             final RollingFileWriter<KeyValue, DataFileMeta> dataWriter =
                     writerFactory.createRollingMergeTreeFileWriter(0);
 
             try {
+                // SR24.03.16 将缓存中的所有数据flush到磁盘
                 writeBuffer.forEach(
                         keyComparator,
                         mergeFunction,
@@ -215,18 +229,23 @@ public class MergeTreeWriter implements RecordWriter<KeyValue>, MemoryOwner {
             }
 
             if (changelogWriter != null) {
+                // SR24.03.16
+                // 将changelog新增文件缓存在算子中，供算子在进行checkpoint的时候将所有的flush下发到下游算子（提交算子），下发是在prepareSnapshotPreBarrier()方法中进行的，所以会在下游算子进行checkpoint之前接收所有的flush信息
                 newFilesChangelog.addAll(changelogWriter.result());
             }
 
+            // 写入的数据文件
             for (DataFileMeta fileMeta : dataWriter.result()) {
+                // SR24.03.16 将新增的文件缓存在算子中，供算子在进行checkpoint的时候将所有的提交下发到下游算子（提交算子）
                 newFiles.add(fileMeta);
                 compactManager.addNewFile(fileMeta);
             }
 
             writeBuffer.clear();
         }
-
+        // SR24.03.16 尝试同步上一次compact结果
         trySyncLatestCompaction(waitForLatestCompaction);
+        // SR24.03.16 尝试去触发一次新的compact
         compactManager.triggerCompaction(forcedFullCompaction);
     }
 

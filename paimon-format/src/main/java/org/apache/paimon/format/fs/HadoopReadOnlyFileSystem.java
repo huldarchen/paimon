@@ -35,6 +35,7 @@ import org.apache.hadoop.util.Progressable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.util.Arrays;
 
 /** A read only {@link FileSystem} that wraps an {@link FileIO}. */
 public class HadoopReadOnlyFileSystem extends FileSystem {
@@ -163,6 +164,7 @@ public class HadoopReadOnlyFileSystem extends FileSystem {
         @Override
         public void readFully(long position, byte[] buffer, int offset, int length)
                 throws IOException {
+            System.out.println("===============" + seekableInputStream.getClass());
             seekableInputStream.seek(position);
             IOUtils.readFully(seekableInputStream, buffer, offset, length);
         }

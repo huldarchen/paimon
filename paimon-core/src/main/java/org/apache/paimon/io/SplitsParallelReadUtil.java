@@ -111,7 +111,6 @@ public class SplitsParallelReadUtil {
                         if (row == null) {
                             return null;
                         }
-
                         return addExtraToRow.apply(row, batch.extraMessage());
                     }
 

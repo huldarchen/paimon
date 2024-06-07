@@ -55,6 +55,7 @@ public class Levels {
                         numLevels,
                         inputFiles.stream().mapToInt(DataFileMeta::level).max().orElse(-1) + 1);
         checkArgument(restoredMaxLevel > 1, "levels must be at least 2.");
+        // level的比较器 先比较SequenceNumber 再比较文件名字
         this.level0 =
                 new TreeSet<>(
                         (a, b) -> {

@@ -208,7 +208,7 @@ public class FileStoreCommitImpl implements FileStoreCommit {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Ready to commit\n" + committable.toString());
         }
-
+        // SR24.03.19 写入manifest
         long started = System.nanoTime();
         int generatedSnapshot = 0;
         int attempts = 0;

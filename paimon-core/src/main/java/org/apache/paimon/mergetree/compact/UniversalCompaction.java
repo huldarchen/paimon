@@ -70,6 +70,7 @@ public class UniversalCompaction implements CompactStrategy {
     public Optional<CompactUnit> pick(int numLevels, List<LevelSortedRun> runs) {
         int maxLevel = numLevels - 1;
 
+        //
         if (opCompactionInterval != null) {
             if (lastOptimizedCompaction == null
                     || currentTimeMillis() - lastOptimizedCompaction > opCompactionInterval) {

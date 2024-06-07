@@ -48,6 +48,7 @@ public class AppendOnlySplitGenerator implements SplitGenerator {
         List<DataFileMeta> files = new ArrayList<>(input);
         files.sort(fileComparator(bucketMode == BucketMode.UNAWARE));
         Function<DataFileMeta, Long> weightFunc = file -> Math.max(file.fileSize(), openFileCost);
+        // 获取排序后的数据文件
         return BinPacking.packForOrdered(files, weightFunc, targetSplitSize);
     }
 

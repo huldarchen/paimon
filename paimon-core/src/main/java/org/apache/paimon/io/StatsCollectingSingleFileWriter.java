@@ -67,6 +67,7 @@ public abstract class StatsCollectingSingleFileWriter<T, R> extends SingleFileWr
     @Override
     public void write(T record) throws IOException {
         InternalRow rowData = writeImpl(record);
+        // 元数据收集,有两种方式: 1. tableStatsExtractor 读取文件生成  2. tableStatsCollector 每次写入时统计
         if (tableStatsCollector != null && !tableStatsCollector.isDisabled()) {
             tableStatsCollector.collect(rowData);
         }

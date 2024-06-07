@@ -97,11 +97,13 @@ public abstract class FlinkSink<T> implements Serializable {
 
         boolean waitCompaction;
         if (table.coreOptions().writeOnly()) {
+            // SR24.03.21 如果是只读 即将跳过 合并和镜像操作
             waitCompaction = false;
         } else {
             Options options = table.coreOptions().toConfiguration();
             ChangelogProducer changelogProducer = table.coreOptions().changelogProducer();
             waitCompaction = prepareCommitWaitCompaction(options);
+            // SR24.03.21 增量提交后将不断触发完全压缩。
             int deltaCommits = -1;
             if (options.contains(FULL_COMPACTION_DELTA_COMMITS)) {
                 deltaCommits = options.get(FULL_COMPACTION_DELTA_COMMITS);
@@ -114,6 +116,7 @@ public abstract class FlinkSink<T> implements Serializable {
                                         / checkpointConfig.getCheckpointInterval());
             }
 
+            // SR24.03.16 如果changelog 是每次完全压缩时生成变更日志文件(代价最大的) 或者 完全增量提交出发次数
             if (changelogProducer == ChangelogProducer.FULL_COMPACTION || deltaCommits >= 0) {
                 int finalDeltaCommits = Math.max(deltaCommits, 1);
                 return (table, commitUser, state, ioManager, memoryPool, metricGroup) -> {
@@ -132,7 +135,7 @@ public abstract class FlinkSink<T> implements Serializable {
                 };
             }
         }
-
+        // SR24.03.16 大多数的写入实现
         return (table, commitUser, state, ioManager, memoryPool, metricGroup) -> {
             assertNoSinkMaterializer.run();
             return new StoreSinkWriteImpl(
@@ -159,8 +162,10 @@ public abstract class FlinkSink<T> implements Serializable {
     }
 
     public DataStreamSink<?> sinkFrom(DataStream<T> input, String initialCommitUser) {
+        // SR24.03.16 执行真正的写入操作，在这个阶段不会进行提交，相当于两阶段提交的第一阶段，进行数据写入，不会有snapshot生成
         // do the actually writing action, no snapshot generated in this stage
         DataStream<Committable> written = doWrite(input, initialCommitUser, input.getParallelism());
+        // SR24.03.16 执行提交操作，会生成snapshot，下游可见，如果日志配置
         // commit the committable to generate a new snapshot
         return doCommit(written, initialCommitUser);
     }
@@ -194,6 +199,8 @@ public abstract class FlinkSink<T> implements Serializable {
                                 .get(ExecutionOptions.RUNTIME_MODE)
                         == RuntimeExecutionMode.STREAMING;
 
+        // SR24.03.16
+        // 是否只是writeOnly，如果是，则会忽略compact和snapshot过期，这个配置需要结合专门的compact任务执行，不然会造成小文件剧增，同时降低数据读的性能
         boolean writeOnly = table.coreOptions().writeOnly();
         SingleOutputStreamOperator<Committable> written =
                 input.transform(
@@ -201,7 +208,9 @@ public abstract class FlinkSink<T> implements Serializable {
                                         + " : "
                                         + table.name(),
                                 new CommittableTypeInfo(),
+                                // SR24.03.16 写入算子，真正的写入流程;上游的数据会通过这个算子将数据写入到Paimon表
                                 createWriteOperator(
+                                        // SR24.03.21 写入代理
                                         createWriteProvider(
                                                 env.getCheckpointConfig(),
                                                 isStreaming,
@@ -213,6 +222,8 @@ public abstract class FlinkSink<T> implements Serializable {
             assertBatchConfiguration(env, written.getParallelism());
         }
 
+        // SR24.03.16 Flink会创建一个独立的内存分配器用于merge tree的数据写入操作
+        // SR24.03.16 否则会使用TM的管理内存支持写入操作
         Options options = Options.fromMap(table.options());
         if (options.get(SINK_USE_MANAGED_MEMORY)) {
             declareManagedMemory(written, options.get(SINK_MANAGED_WRITER_BUFFER_MEMORY));
@@ -233,6 +244,7 @@ public abstract class FlinkSink<T> implements Serializable {
         }
 
         OneInputStreamOperator<Committable, Committable> committerOperator =
+                // SR24.03.16 执行提交操作的算子，该算子会生成snapshot，下游可见
                 new CommitterOperator<>(
                         streamingCheckpointEnabled,
                         commitUser,

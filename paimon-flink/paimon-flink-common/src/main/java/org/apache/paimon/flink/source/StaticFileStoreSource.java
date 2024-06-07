@@ -86,6 +86,7 @@ public class StaticFileStoreSource extends FlinkSource {
     }
 
     private List<FileStoreSourceSplit> getSplits(SplitEnumeratorContext context) {
+        // SR24.04.01 生成文件源切分器
         FileStoreSourceSplitGenerator splitGenerator = new FileStoreSourceSplitGenerator();
         TableScan scan = readBuilder.newScan();
         // register scan metrics

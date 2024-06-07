@@ -26,6 +26,8 @@ import org.apache.paimon.types.RowType;
 import org.apache.paimon.utils.ObjectSerializer;
 import org.apache.paimon.utils.OffsetRow;
 
+import java.util.Arrays;
+
 /**
  * Serializer for {@link KeyValue}.
  *
